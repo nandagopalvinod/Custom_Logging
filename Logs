@@ -1,0 +1,117 @@
+############################################################################################################################################################
+#
+#     Custom logging script : To be called once at the starting of the script to enable custom logging.
+#     Logging function available :
+#            1. logger.info(filename,message)
+#            2. logger.debug(filename,message)
+#            3. logger.warning(filename,message)
+#            4. logger.error(filename,message)
+#            5. logger.end()
+#                         
+############################################################################################################################################################
+
+
+import pandas as pd
+import csv
+import functools
+import sys
+from pyspark import SparkContext, SparkConf
+from pyspark.sql import SparkSession, HiveContext
+from pyspark.sql.functions import *
+from operator import add
+from datetime import datetime    
+import pytz
+
+current_date = datetime.today().strftime('%d_%m_%Y')                              # Current date
+log_directory = '/dbfs/mnt/nbex/nbex_extracts/log/'                               # Log folder location on azure blob
+# filename = ''
+log_file_name = log_directory + 'log_'+current_date + '.csv'            # File name with current date in log folder
+
+
+# Look if the file is already present in the log folder.
+try:
+    promo = pd.read_csv(log_file_name)  #Read the current log file.
+    output = []
+    new = []
+
+    #Convert the data frame into a list output giving a 2D list.
+    for i in range(len(promo)):
+        single_input = list(promo.iloc[i])
+        new.append(single_input)
+
+    #Convert the 2D list to the standard usage 1D list for computations.
+    output = functools.reduce(add ,new)
+    
+# If the file is not present, make the new file in log folder for the first time.
+except:
+    output = []
+    
+class logger:
+    
+    def __init__(filename,message):
+        return 0
+    
+    # INFO FUNCTION - To be used to display/store general information about a process.
+    def info(filename,message):     #Pass the filename and the text message
+        current_date = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d-%m-%Y, %H:%M:%S') + ' IST'
+        info_text = 'Time : {} || Level : INFO || File name : {} || Message : {}'.format(current_date,filename,message)
+        ######################################
+        try:
+            promo = pd.read_csv(log_file_name)  #Read the current log file.
+            output = []
+            new = []   
+            for i in range(len(promo)):
+                single_input = list(promo.iloc[i])
+                new.append(single_input)
+            output = functools.reduce(add ,new)
+        except:
+            output = []
+        ######################################
+        output.append(info_text)
+        data = pd.DataFrame(pd.Series(output),dtype=pd.StringDtype())
+        data.to_csv(log_file_name, sep=',', index=False, encoding = 'utf-8')
+        print(info_text)
+
+    # DEBUG FUNCTION - To be used to display/store information in case an action or debugging is required.
+    def debug(filename,message):     #Pass the filename and the text message
+        current_date = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d-%m-%Y, %H:%M:%S') + ' IST'
+        debug_text = 'Time : {} || Level : DEBUG || File name : {} || Message : {}'.format(current_date,filename,message)
+        output.append(debug_text)
+        data = pd.DataFrame(pd.Series(output))
+        data.to_csv(log_file_name, sep=',', index=False, encoding = 'utf-8')
+        print(debug_text)
+
+    # WARNING FUNCTION - To be used to display/store information in case an warning condition is encountered and relevnat information needs to be displayed.
+    def warning(filename,message):     #Pass the filename and the text message
+        current_date = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d-%m-%Y, %H:%M:%S') + ' IST'
+        warning_text = 'Time : {} || Level : WARNING || File name : {} || Message : {}'.format(current_date,filename,message)
+        output.append(warning_text)
+        data = pd.DataFrame(pd.Series(output))
+        data.to_csv(log_file_name, sep=',', index=False, encoding = 'utf-8')
+        print(warning_text)
+        
+    # ERROR FUNCTION - To be used to display/store information in case an error is encontered in execution.
+    def error(filename,message):     #Pass the filename and the text message
+        current_date = datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%d-%m-%Y, %H:%M:%S') + ' IST'
+        error_text = 'Time : {} || Level : ERROR || File name : {} || Message : {}'.format(current_date,filename,message)
+        output.append(error_text)
+        data = pd.DataFrame(pd.Series(output))
+        data.to_csv(log_file_name, sep=',', index=False, encoding = 'utf-8')
+        print(error_text)
+        
+    # END FUNCTION - To be used at the end to close the logs for a file.
+    def end():     
+        end_text = ('*******************************  Log ends : File excecution completed   *******************************')
+        ######################################
+        promo = pd.read_csv(log_file_name)  #Read the current log file.
+        output = []
+        new = []   
+        for i in range(len(promo)):
+            single_input = list(promo.iloc[i])
+            new.append(single_input)
+        output = functools.reduce(add ,new)
+        ######################################
+        output.append(end_text)
+        data = pd.DataFrame(pd.Series(output))
+        data.to_csv(log_file_name, sep=',', index=False, encoding = 'utf-8')
+        print(end_text)
